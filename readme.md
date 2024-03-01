@@ -6,7 +6,7 @@
 ## 安装
 首先，用户应当克隆项目到本地。
 ```bash
-git clone git@github.com:SummerFall1819/RUCSpider.git
+git clone git@github.com:SummerFall1819/RenminSpider.git
 ```
 
 之后，项目应当安装必要的依赖，其中必须使用的依赖可以以如下命令安装。
