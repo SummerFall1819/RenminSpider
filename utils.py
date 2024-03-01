@@ -2,6 +2,7 @@ import tkinter as tk
 import base64
 
 CODE_1 = "?"
+# ddddocr
 
 def GetCode(base64_img: bytes|str):
     window = tk.Tk()
