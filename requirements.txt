@@ -1,0 +1,4 @@
+fake_useragent
+pyyaml
+requests
+schedule
