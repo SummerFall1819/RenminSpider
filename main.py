@@ -36,7 +36,6 @@ def request_response(is_json        : bool           = True,
         AbortException: Abort the program immediately.
         HoldException:  Skip this request and wait until next time.
         RetryException: Retry to connect.
-        
 
     Returns:
         Dict|str: the results based on the is_json parameter.
@@ -112,8 +111,10 @@ class RUCSpider(object):
         
         self.infos = self.CheckSettings()
     
-    
     def update(self):
+        """
+        Update current time, and retrieve cookie is needed.
+        """
         self.timestamp = datetime.now().timestamp()
         self.infos = self.CheckSettings()
         self.logger.info("Data Updated.")
@@ -140,49 +141,43 @@ class RUCSpider(object):
             info = yaml.load(f, Loader=yaml.FullLoader)
         
         if info['username'] == None:
-            raise ValueError('username(Your ID) is empty, please fill in your id in your setting file!')
-        
+            self.logger.critical('username is empty, please fill in your id in your setting file!')
+            sys.exit(0)
+            
         if info["password"] == None:
-            raise ValueError('password is empty, please fill in your password in your setting file!')
-        
+            self.logger.critical('password is empty, please fill in your password in your setting file!')
+            sys.exit(0)
+
         if info["token"] == None:
             self.logger.info('Token empty, pulling html to get one token.')
-            
             info["token"] = self._GetToken_()
-            
             Update = True
             
         if info["cookies"] == None or info["expire_time"] == None or len(info["cookies"]) == 0:
             self.logger.info('Cookie Empty, trying to login to gain a cookie')
-            
             info["cookies"], info["expire_time"] = self._GetCookie_(info)
-            
             Update = True
             
         if self.timestamp > info["expire_time"]:
             self.logger.info('Cookie Expired, trying to login to gain a new cookie')
-            
             info["cookies"], info["expire_time"] = self._GetCookie_(info)
-            
             Update = True
             
         for k,v in info["cookies"].items():
             if v == None:
                 self.logger.info('Cookie incomplete, trying to login to gain a cookie')
                 info["cookies"], info["expire_time"] = self._GetCookie_(info)
+                Update = True
                 break
             
         self.manuals = info["manual"]
             
         if info["interval_seconds"] == None:
             self.logger.info('Interval Empty, setting to default value(300)')
-            
             info["interval_seconds"] = 300
             
             global INTERVAL
-            
             INTERVAL = info["interval_seconds"]
-            
             Update = True
             
         if Update:
@@ -195,7 +190,6 @@ class RUCSpider(object):
     def _GetToken_ (self):
         """
         Get the one usable token.
-
 
         Returns:
             str: one usable token.
@@ -220,8 +214,6 @@ class RUCSpider(object):
         regex = re.compile(r'(?<=<input type="hidden" name="csrftoken" value=")([\S]+)(?=" id="csrftoken" \/>)')
         token = re.search(regex,res_html)[0]
         
-        assert len(token) == 10, "Unexpected error. {}".format(token)
-        
         return token
     
     def _GetCookie_(self,info:dict,func = None):
@@ -234,7 +226,7 @@ class RUCSpider(object):
 
         Returns:
             Dict: the cookie dict.
-            float: The expire timestamp
+            float: The expire timestamp.
         """
         from utils import GetCode,OCRCODE
         
@@ -276,10 +268,14 @@ class RUCSpider(object):
             b64_img = re.search(pattern,captcha_info["b64s"])[0]
             captcha_id = captcha_info["id"]
             
-            if func != None:
-                captcha_text = func(b64_img)
+            if self.manuals:
+                captcha_text = GetCode(b64_img)
+                
             else:
-                captcha_text = OCRCODE(b64_img)
+                if func != None:
+                    captcha_text = func(b64_img)
+                else:
+                    captcha_text = OCRCODE(b64_img)
             
             return captcha_text,captcha_id,bytes(b64_img,encoding="utf-8")
             
@@ -334,14 +330,6 @@ class RUCSpider(object):
         
         new_lectures = []
         new_id = []
-        
-        # try:
-        #     response = requests.post(url = tgt_url, headers = headers, json = params, cookies = self.infos["cookies"])
-        # except Exception as e:
-        #     self.logger.warning(str(e))
-        #     self.logger.warning("Trying reload to refresh the cookie.")
-        #     self._GetCookie_(self.infos)
-        #     response = requests.post(url = tgt_url, headers = headers, json = params, cookies = self.infos["cookies"])
             
         try:
             response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"])
@@ -404,9 +392,6 @@ class RUCSpider(object):
         def sub_reg(id:int):
             params = {"aid":id}
             headers = {'User-Agent': self.ua.random}
-            # response = requests.post(url = tgt_url, headers = headers, json = params, cookies = self.infos["cookies"])
-            # response.encoding = 'utf-8'
-            # results = json.loads(response.text)
             
             results = request_response(method = 'POST',logger = self.logger, url = tgt_url, headers = headers, json = params, cookies = self.infos["cookies"])
             
