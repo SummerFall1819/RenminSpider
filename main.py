@@ -357,41 +357,33 @@ class RUCSpider(object):
             self.logger.warning(str(e))
             return
         
-        # response.encoding = 'utf-8'
-        
-        # try:
-        #     results = json.loads(response.text)["data"]["data"]
-        # except:
-        #     self.logger.warning("Unable to load json, check 'error.txt' to see the response. Error on line {}".format(sys._getframe().f_lineno))
-        #     with open("error.txt","w",encoding="utf-8") as f:
-        #         f.write(response.text)
-        #         return
-        
         results = response["data"]["data"]
         
         if os.path.exists(SAVE_FILES):
-
             with open(SAVE_FILES,"r",encoding = 'utf-8') as f:
                 saves = json.load(f)
                 
         else:
-            saves = {}
+            saves = []
         
         Update = False
         
-        if saves == {}:
-            Update = True
+        if saves == []:
+            saves = [res["aid"] for res in results]
+            self.logger.debug("Empty result storage filled.")
+
         else:
             for lec in results:
-                if lec not in saves:
+                if lec["aid"] not in saves:
                     self.logger.warning("New lecture found!")
-                    Update = True
+                    saves.append(lec["aid"])
                     new_lectures.append(lec)
-                
+        
+        with open(SAVE_FILES,"w",encoding = 'utf-8') as f:
+            json.dump(saves,f,ensure_ascii=False,separators=(',', ':'),indent = 4)
+
         if Update:
-            with open(SAVE_FILES,"w",encoding = 'utf-8') as f:
-                json.dump(results,f,ensure_ascii=False,separators=(',', ':'),indent=4)
-            self.logger.info("Get new lecture. Written in file.")
+            self.logger.info("New lecture found, information written in file.")
             with open("log.txt","a",encoding='utf-8') as f:
                 for lec in new_lectures:
                     f.write(lec["aname"] + ':' + lec["location"] + '\n')
@@ -401,7 +393,7 @@ class RUCSpider(object):
         new_id = [lec["aid"] for lec in new_lectures if filter(lec)]
 
         if len(new_id) != 0:
-            print("Start Register!")
+            self.logger.info("Trying register new lectures {}.".format(str(new_id)))
             self.register(new_id)
             
         self.logger.info("Check complete.")
@@ -422,7 +414,7 @@ class RUCSpider(object):
 
         for id in aid:
             res = sub_reg(id)
-            print("Register id {}:{}".format(id,res))
+            self.logger.info("Register id {%6d}: {}".format(id,res))
 
     @classmethod
     def FilterLecture(self,lect:dict,schedule:list):
