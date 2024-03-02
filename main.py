@@ -13,7 +13,7 @@ import requests
 import schedule
 
 from spiderexcep import *
-from loggers import HandleLog
+from spiderlog import init_log
 
 MANUAL_CAPTCHA = False
 INTERVAL = 300
@@ -104,25 +104,7 @@ class RUCSpider(object):
         self.ua = UserAgent()
         self.setting_file = setting_file
         
-        logging.basicConfig(
-            format = '[%(asctime)s]  <%(levelname)s>: %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S',
-            filename = './log.log',
-            filemode = 'a'
-        )
-        # self.logger = logging.getLogger('<RUCSpider>')
-        # self.logger.setLevel(logging.INFO)
-        
-        # ch = logging.StreamHandler()
-        
-        # formatter = logging.Formatter('[%(asctime)s]  <%(levelname)s>: %(message)s',
-        #                                 datefmt='%Y-%m-%d %H:%M:%S')
-        # ch.setLevel(logging.INFO)
-        # ch.setFormatter(formatter)
-        
-        # self.logger.addHandler(ch)
-        
-        self.logger = HandleLog()
+        self.logger = init_log('<RUCSpider>')
         
         self.timestamp = datetime.now().timestamp()
         self.DELTA_TIME = 18000
@@ -228,6 +210,7 @@ class RUCSpider(object):
             self.logger.warning(str(e))
             exit(0)
         except RetryException as e:
+            self.logger.debug("Token Retrive fail. Retrying.")
             arg = e.GetParams()
             res_html = request_response(arg,kwargs=arg["kwargs"])
         
@@ -281,9 +264,11 @@ class RUCSpider(object):
             try:
                 captcha_info = request_response(logger = self.logger, url = captcha_url,headers = headers)
             except (HoldException,AbortException) as e:
+                self.logger.error("Aborion with {}".format(str(e)))
                 exit(0)
             except RetryException as e:
                 arg = e.GetParams()
+                self.logger.debug("Cookie retrieve fail. Retrying.")
                 captcha_info = request_response(arg,kwargs = arg["kwargs"])
             
             pattern = re.compile(r"(?<=data:image\/png;base64,)([\S]+)")
@@ -361,8 +346,10 @@ class RUCSpider(object):
         try:
             response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"])
         except HoldException as e:
+            self.logger.info("Holding pulling.")
             return
         except RetryException as e:
+            self.logger.debug("Detecting error as {}. Reloading cookies.".format(e))
             arg = e.GetParams()
             self._GetCookie_(self.infos)
             response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"])
