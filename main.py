@@ -62,7 +62,7 @@ def request_response(is_json        : bool           = True,
         if logger != None:
             logger.warning("The connection is down.\n")
             logger.warning("Error Value {}".format(e))
-        raise HoldException(str(e),arg)
+        raise HoldException(str(e))
 
     except requests.exceptions.Timeout as e:
         if logger != None:
@@ -110,6 +110,13 @@ class RUCSpider(object):
             filemode = 'a'
         )
         self.logger = logging.getLogger('<RUCSpider>')
+        
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        formatter = logging.Formatter('[%(asctime)s]  <%(levelname)s>: %(message)s')
+        ch.setFormatter(formatter)
+        
+        self.logger.addHandler(ch)
         
         self.timestamp = datetime.now().timestamp()
         self.DELTA_TIME = 18000
@@ -403,6 +410,7 @@ class RUCSpider(object):
             self.register(new_id)
             
         self.logger.info("Check complete.")
+        print("Check complete.")
     
     def register(self,aid:list):
         tgt_url = r"https://v.ruc.edu.cn/campus/Regist/regist"

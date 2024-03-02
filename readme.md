@@ -17,17 +17,7 @@ pip install -r requirements.txt
 
 **注意**：为了识别中国人民大学登陆时必要的验证码信息，您需要以下三项之一：
 1. 程序每次进行登录时，手动输入验证码信息，此方法无需其他依赖。您需要在启动项目前，将 `setting.yml` 文件中 `manual` 改为 `True`，程序会提供简洁的 `tkinker` GUI 等待输入。
-2. 采取本仓库提供的 `muggle-ocr` 实现方式，需要安装额外的依赖。
-**此种方式将会影响您的 `tensorflow` 库和 `keras` 库**， **强烈建议在虚拟环境下进行**。
-    如果您没有 `tensorflow` 环境，应当先安装 `tensorflow`.:
-    ```bash
-    pip insall tensorflow
-    ```
-    在安装完 `tensorflow` 之后，安装 `muggle-ocr`
-    ```bash
-    pip install ./package/muggle-ocr-1.0.3.tar.gz
-    ```
-    因而完成依赖设置。
+2. 采取本仓库提供的 `ddddocr` 实现方式。额外的依赖已经在 `requirements.txt` 中列出并安装。
 3. 自行配置 OCR 环境，并在 `utils.py` 中重写函数。
     您可以重写 `OCRCODE` 函数，该函数接受以 `base64` 编码的 `png` 图片，最终返回该验证码对应的文本。
 
@@ -42,9 +32,6 @@ RUCSpider
 │  setting.yml
 │  spiderexcep.py
 │  utils.py
-│  
-├─package
-│      muggle-ocr-1.0.3.tar.gz
 ```
 
 ## 使用

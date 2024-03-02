@@ -49,6 +49,19 @@ def OCRCODE(base_64_img: str):
     
     return text
 
+def OCRCODE(base64_img: str|bytes):
+    from ddddocr import DdddOcr
+    
+    ocr = DdddOcr()
+    if type(base_64_img) == str:
+        base_64_img = bytes(base_64_img, encoding = "utf-8")
+    imgdata = base64.b64decode(base_64_img)
+    
+    code = ocr.classification(imgdata)
+    
+    return code
+    
+
 
 
 

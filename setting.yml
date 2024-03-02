@@ -1,11 +1,11 @@
 cookies:
-  access_token: M-Uxnw4_TiOhrYYlsuRciw
+  access_token: nl-IdEz7R-mem3OAgMS4oQ
   is_simple: '1'
-  session: 1d5201724c9747f5b0c1e56850f33a36.3ac98d6d402d45cf969fc0742dc8b07e
+  session: 9971a3c0a16c46bc8d82326b8ce1dd12.2015b586e57e4947a814fd3b9f6b9765
   tiup_uid: 611232d990f4d162e19b8472
-expire_time: 1709301914.698353
+expire_time: 1709360194.653817
 interval_seconds: 300
+manual: false
 password: Yancy2003
 token: u75p652wq8
 username: 2021201773
-manual: False
