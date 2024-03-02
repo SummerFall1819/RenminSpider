@@ -85,7 +85,8 @@ def request_response(is_json        : bool           = True,
 
 class RUCSpider(object):
     def __init__(self,
-                setting_file:str = "./setting.yml"):
+                setting_file:str = "./setting.yml",
+                cookie_retrieve = None):
         """
         The initialization of the class.
 
@@ -110,6 +111,7 @@ class RUCSpider(object):
         self.manuals = False
         
         self.infos = self.CheckSettings()
+        self.captcha_func = cookie_retrieve
     
     def update(self):
         """
@@ -155,18 +157,18 @@ class RUCSpider(object):
             
         if info["cookies"] == None or info["expire_time"] == None or len(info["cookies"]) == 0:
             self.logger.info('Cookie Empty, trying to login to gain a cookie')
-            info["cookies"], info["expire_time"] = self._GetCookie_(info)
+            info["cookies"], info["expire_time"] = self._GetCookie_(info,func = self.captcha_func)
             Update = True
             
         if self.timestamp > info["expire_time"]:
             self.logger.info('Cookie Expired, trying to login to gain a new cookie')
-            info["cookies"], info["expire_time"] = self._GetCookie_(info)
+            info["cookies"], info["expire_time"] = self._GetCookie_(info,func = self.captcha_func)
             Update = True
             
         for k,v in info["cookies"].items():
             if v == None:
                 self.logger.info('Cookie incomplete, trying to login to gain a cookie')
-                info["cookies"], info["expire_time"] = self._GetCookie_(info)
+                info["cookies"], info["expire_time"] = self._GetCookie_(info,func = self.captcha_func)
                 Update = True
                 break
             
@@ -304,7 +306,7 @@ class RUCSpider(object):
 
         return cookie,self.timestamp + self.DELTA_TIME
     
-    def PullLecture(self, maxlen:int = 30,Condition:list = None, Query:str = None, filter = lambda x: True):
+    def PullLecture(self, maxlen:int = 30,Condition:list = None, Query:str = "", filter = lambda x: True):
         tgt_url = r"https://v.ruc.edu.cn/campus/v2/search"
         SAVE_FILES = "./res.json"
         
@@ -323,7 +325,7 @@ class RUCSpider(object):
         "progress"     : 0,
         "owneruid"     : "",
         "sponsordeptid": "",
-        "query"        : "",
+        "query"        : Query,
         "canregist"    : 0}
         
         headers = {'User-Agent': self.ua.random}
@@ -339,7 +341,7 @@ class RUCSpider(object):
         except RetryException as e:
             self.logger.debug("Detecting error as {}. Reloading cookies.".format(e))
             arg = e.GetParams()
-            self._GetCookie_(self.infos)
+            self._GetCookie_(self.infos,self.captcha_func)
             response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"])
         except Exception as e:
             self.logger.warning(str(e))
@@ -439,15 +441,17 @@ def packed(schedule_list:list):
 
 def main():
     
+    CONDITION = ["素质拓展认证","形势与政策","形势与政策讲座"]
+    
     spider = RUCSpider()
     with open("schedule.yml","r",encoding="utf-8") as f:
         timespan = yaml.load(f,Loader=yaml.FullLoader)
         
-    spider.PullLecture(maxlen = 30, Condition = ["素质拓展认证","形势与政策","形势与政策讲座"],filter = packed(timespan))
+    spider.PullLecture(maxlen = 30, Condition = CONDITION ,filter = packed(timespan))
 
     filt = packed(timespan)
 
-    schedule.every(INTERVAL).seconds.do(spider.PullLecture,maxlen = 30, Condition = ["素质拓展认证","形势与政策","形势与政策讲座"])
+    schedule.every(INTERVAL).seconds.do(spider.PullLecture,maxlen = 30, Condition = CONDITION)
     schedule.every(30).minutes.do(spider.update)
     
     while True:

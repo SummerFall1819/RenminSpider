@@ -59,8 +59,54 @@ RUCSpider
 在完成修改之后，(激活虚拟环境)，运行 `main.py` 即可。
 
 ## 其他细节
-对于希望通过这个程序获取微人大其他信息的同学而言，以下是必要的网站结构信息。
+### 基于本程序的其他改进
 
+#### 筛选器
+本程序提供了一个 `filter` 接口，以协助进行必要的讲座条件检查。默认不进行筛选，但仍旧实现了一个简单的筛选器：其根据你给出的空闲时间区间检查讲座是否在空闲时间区间内。如果用户希望使用这个筛选器，应当修改 `schedule.yml` 下列出的七天的信息。阅读 `yaml` 文件在此不作赘述。时间从星期一到星期天。修改完 `schedule.yml` 后，在 `main.py` 下 `line:450` 行出增加参数 `filter = filt` 即可。
+
+如果希望自定义一个筛选器，其筛选器函数要求如下：
+```python
+def func(lec:dict):
+    """
+    This function take excatly one lecture information, and check if it satisfy the restrictions.
+
+    Args:
+        lec (dict): lecture information.
+    Returns:
+        bool: True if the lecture satisfy the restrictions, false otherwise.
+    """
+    
+    # your code here.
+```
+
+你可以通过 `python` 的柯里化引入更多参数。
+
+#### OCR 接入
+除开重写 `OCR` 之外，你也可以定义自己的方式来获取验证码，并在 `main.py`, `RUCSpider` 初始化处加入 `captcha_func = [Callable]` 加入函数要求如下
+```python
+def captcha_func(base_64_img:str|bytes):
+    """
+    This function load in a base64 encoded image, and return the captcha code.
+    
+    Args:
+        base_64_img (str|bytes): base64 encoded image.
+    
+    Returns:
+        str: captcha code.
+    """
+
+    # Your code here.
+```
+这种函数是不限于 `OCR` 方式的，你可以自主设计任何的方式，只要能从中获得验证码即可。
+
+#### 讲座类型筛选
+本程序默认是处于筛选形势与政策讲座而设计的，在 `alias.json` 下保存了少量的条件筛选内容。如果您希望进行其他讲座的监看，请修改 `main.py` 下 `CONDITION`, 其元素数目为三个，分别对应活动大类、活动小类、小类子类的筛选。
+(活动状态和组织单位的实现与监看的初衷冲突，故未实现)，如果希望查找活动名称，那么在 `PullLecture` 下加入 `Query` 为关键词即可。
+**注意**：有些小类子类名称与活动小类冲突，这种情况请将小类子类更改为 “不限”，即可实现内容。
+
+
+### 程序实现细节
+@TODO 待完成吧。
 
 ## 其他
 本程序尚未完全完成，但目前可以实现基本功能。在后期会逐步改进。
