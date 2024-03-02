@@ -1,10 +1,6 @@
 cookies:
-  access_token: 
-  is_simple: '1'
-  session: 
-  tiup_uid: 
-expire_time: 1709361342.235768
-interval_seconds: 300
+expire_time: 
+interval_seconds: 
 manual: false
 password: 
 token: 

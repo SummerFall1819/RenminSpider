@@ -56,7 +56,7 @@ def request_response(is_json        : bool           = True,
         if is_json == True:
             return response.json()
         else:
-            return response.text()
+            return response.text
     
     except requests.exceptions.ConnectionError as e:
         if logger != None:
@@ -110,10 +110,13 @@ class RUCSpider(object):
             filemode = 'a'
         )
         self.logger = logging.getLogger('<RUCSpider>')
+        self.logger.setLevel(logging.INFO)
         
         ch = logging.StreamHandler()
+        
+        formatter = logging.Formatter('[%(asctime)s]  <%(levelname)s>: %(message)s',
+                                        datefmt='%Y-%m-%d %H:%M:%S')
         ch.setLevel(logging.INFO)
-        formatter = logging.Formatter('[%(asctime)s]  <%(levelname)s>: %(message)s')
         ch.setFormatter(formatter)
         
         self.logger.addHandler(ch)
