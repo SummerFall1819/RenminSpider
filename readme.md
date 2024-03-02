@@ -18,11 +18,17 @@ pip install -r requirements.txt
 **注意**：为了识别中国人民大学登陆时必要的验证码信息，您需要以下三项之一：
 1. 程序每次进行登录时，手动输入验证码信息，此方法无需其他依赖。您需要在启动项目前，将 `setting.yml` 文件中 `manual` 改为 `True`，程序会提供简洁的 `tkinker` GUI 等待输入。
 2. 采取本仓库提供的 `ddddocr` 实现方式。额外的依赖已经在 `requirements.txt` 中列出并安装。
-    **注意**：由于 `ddddocr` 使用 `PIL.image` 中已经在 `10.0.0` 弃用的方法 `Image.ANTIALIAS`. 因此需要对 `Pillow` 降级以避免此错误。或者，修改 `ddddocr` 的 `_init_.py` 文件，将其中的 `ANTIALIAS` 替换为新方法 `LANCZOS`. 出于自动配置的需要，这里使用了 `Pillow` 降级的方式。
+    - **注意**：由于 `ddddocr` 使用 `PIL.image` 中已经在 `10.0.0` 弃用的方法 `Image.ANTIALIAS`. 因此需要对 `Pillow` 降级以避免此错误。或者，修改 `ddddocr` 的 `_init_.py` 文件，将其中的 `ANTIALIAS` 替换为新方法 `LANCZOS`. 出于自动配置的需要，这里使用了 `Pillow` 降级的方式。
     对应错误：
-    ```bash
-    image = image.resize((int(image.size[0] * (64 / image.size[1])), 64), Image.ANTIALIAS).convert('L')
-    ```
+        ```bash
+        image = image.resize((int(image.size[0] * (64 / image.size[1])), 64), Image.ANTIALIAS).convert('L')
+        ```
+    - **注意**: 由于 `ddddocr` 不能一定正确识别验证码，因此可能会导致产生其他错误，该错误是由于识别失败导致无法获取 token 信息，程序将产生 `error.txt` 文件和一个 `png` 形式的验证码文件以供校对。一旦发生此类错误，程序将立刻停止。如果由于错误的学号和密码进行多次尝试可能会冻结账号，**请确保学号和密码正确**。
+        ```bash
+        Unexpected error. Check username, password and captcha in 'error.txt' to ensure the login process is correct.
+        ```
+
+
 3. 自行配置 OCR 环境，并在 `utils.py` 中重写函数。
     您可以重写 `OCRCODE` 函数，该函数接受以 `base64` 编码的 `png` 图片，最终返回该验证码对应的文本。
 

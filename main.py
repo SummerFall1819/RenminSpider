@@ -13,6 +13,7 @@ import requests
 import schedule
 
 from spiderexcep import *
+from loggers import HandleLog
 
 MANUAL_CAPTCHA = False
 INTERVAL = 300
@@ -109,17 +110,19 @@ class RUCSpider(object):
             filename = './log.log',
             filemode = 'a'
         )
-        self.logger = logging.getLogger('<RUCSpider>')
-        self.logger.setLevel(logging.INFO)
+        # self.logger = logging.getLogger('<RUCSpider>')
+        # self.logger.setLevel(logging.INFO)
         
-        ch = logging.StreamHandler()
+        # ch = logging.StreamHandler()
         
-        formatter = logging.Formatter('[%(asctime)s]  <%(levelname)s>: %(message)s',
-                                        datefmt='%Y-%m-%d %H:%M:%S')
-        ch.setLevel(logging.INFO)
-        ch.setFormatter(formatter)
+        # formatter = logging.Formatter('[%(asctime)s]  <%(levelname)s>: %(message)s',
+        #                                 datefmt='%Y-%m-%d %H:%M:%S')
+        # ch.setLevel(logging.INFO)
+        # ch.setFormatter(formatter)
         
-        self.logger.addHandler(ch)
+        # self.logger.addHandler(ch)
+        
+        self.logger = HandleLog()
         
         self.timestamp = datetime.now().timestamp()
         self.DELTA_TIME = 18000
@@ -304,7 +307,7 @@ class RUCSpider(object):
         cookie = session.cookies.get_dict()
         
         if len(cookie) == 0:
-            self.logger.warning("Unexpected error. Check username, password and captcha in 'error.txt' to ensure the login process is correct.")
+            self.logger.critical("Unexpected error. Check username, password and captcha in 'error.txt' to ensure the login process is correct.")
             
             with open('error.txt','w',encoding='utf-8') as f:
                 f.write("username:{}\n".format(params["username"][4:]))
@@ -315,6 +318,8 @@ class RUCSpider(object):
             
             with open("{}.png".format(params["captcha_id"]),"wb") as f:
                 f.write(imgdata)
+                
+            sys.exit(0)
 
         return cookie,self.timestamp + self.DELTA_TIME
     
@@ -413,7 +418,6 @@ class RUCSpider(object):
             self.register(new_id)
             
         self.logger.info("Check complete.")
-        print("Check complete.")
     
     def register(self,aid:list):
         tgt_url = r"https://v.ruc.edu.cn/campus/Regist/regist"
