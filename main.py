@@ -404,7 +404,7 @@ class RUCSpider(object):
 
         for id in aid:
             res = sub_reg(id)
-            self.logger.info("Register id {%6d}: {}".format(id,res))
+            self.logger.info("Register id {:>6d}: {}".format(id,res))
 
     @classmethod
     def FilterLecture(self,lect:dict,schedule:list):
