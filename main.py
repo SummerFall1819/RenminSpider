@@ -109,9 +109,10 @@ class RUCSpider(object):
         self.timestamp = datetime.now().timestamp()
         self.DELTA_TIME = 18000
         self.manuals = False
+        self.captcha_func = cookie_retrieve
         
         self.infos = self.CheckSettings()
-        self.captcha_func = cookie_retrieve
+        
     
     def update(self):
         """
@@ -337,6 +338,7 @@ class RUCSpider(object):
             response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"])
         except HoldException as e:
             self.logger.info("Holding pulling.")
+            response = {"data":{"data":[]}}
             return
         except RetryException as e:
             self.logger.debug("Detecting error as {}. Reloading cookies.".format(e))
@@ -345,6 +347,7 @@ class RUCSpider(object):
             response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"])
         except Exception as e:
             self.logger.warning(str(e))
+            response = {"data":{"data":[]}}
             return
         
         results = response["data"]["data"]
