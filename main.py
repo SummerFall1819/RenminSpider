@@ -374,20 +374,17 @@ class RUCSpider(object):
         
         with open(SAVE_FILES,"w",encoding = 'utf-8') as f:
             json.dump(saves,f,ensure_ascii=False,separators=(',', ':'),indent = 4)
-
-        if Update:
-            self.logger.info("New lecture found, information written in file.")
-            with open("log.txt","a",encoding='utf-8') as f:
-                for lec in new_lectures:
-                    f.write(lec["aname"] + ':' + lec["location"] + '\n')
-                    f.write(lec["begintime"] + '~' + lec["endtime"] + '\n')
-                    f.write('\n')
         
         new_id = [lec["aid"] for lec in new_lectures if filter(lec)]
 
         if len(new_id) != 0:
             self.logger.info("Trying register new lectures {}.".format(str(new_id)))
             self.register(new_id)
+            with open("log.txt","a",encoding='utf-8') as f:
+                for lec in new_lectures:
+                    f.write(lec["aname"] + ':' + lec["location"] + '\n')
+                    f.write(lec["begintime"] + '~' + lec["endtime"] + '\n')
+                    f.write('\n')
             
         self.logger.info("Check complete.")
     
@@ -462,3 +459,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+    
+# make it robust. If the code fails. you may just use log in again...
