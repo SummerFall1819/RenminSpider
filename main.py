@@ -178,7 +178,7 @@ class RUCSpider(object):
         if info["interval_seconds"] == None:
             self.logger.info('Interval Empty, setting to default value(300)')
             info["interval_seconds"] = 300
-            
+        else:
             global INTERVAL
             INTERVAL = info["interval_seconds"]
             Update = True
@@ -265,6 +265,9 @@ class RUCSpider(object):
                 arg = e.GetParams()
                 self.logger.debug("Cookie retrieve fail. Retrying.")
                 captcha_info = request_response(arg,kwargs = arg["kwargs"])
+            except Exception as e:
+                self.logger.error("Aborion with {}".format(str(e)))
+                exit(0)
             
             pattern = re.compile(r"(?<=data:image\/png;base64,)([\S]+)")
     
