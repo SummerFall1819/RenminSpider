@@ -1,10 +1,11 @@
 import tkinter as tk
 import base64
 
-CODE_1 = "?"
-# ddddocr
+from typing import ByteString, AnyStr, Union
 
-def GetCode(base64_img: bytes|str):
+CODE_1 = ""
+
+def GetCode(base64_img: Union[ByteString,AnyStr]):
     window = tk.Tk()
     
     global CODE_1
@@ -21,9 +22,7 @@ def GetCode(base64_img: bytes|str):
     def Confirm(event):
         code = entry.get()
         global CODE_1
-        print(CODE_1)
         CODE_1 = code
-        print(code, CODE_1)
         window.destroy()
         return 'break'
     entry.bind('<Return>',Confirm)
@@ -38,7 +37,6 @@ def GetCode(base64_img: bytes|str):
     # window.mainloop()
     return CODE_1
 
-
 # def OCRCODE(base_64_img: str):
 #     import muggle_ocr
 #     sdk = muggle_ocr.SDK(model_type=muggle_ocr.ModelType.Captcha)
@@ -46,19 +44,16 @@ def GetCode(base64_img: bytes|str):
 #         base_64_img = bytes(base_64_img, encoding = "utf-8")
 #     imgdata = base64.b64decode(base_64_img)
 #     text = sdk.predict(imgdata)
-    
 #     return text
 
-def OCRCODE(base64_img: str|bytes):
+def OCRCODE(base64_img: Union[ByteString,AnyStr]):
     from ddddocr import DdddOcr
     
-    ocr = DdddOcr()
+    ocr = DdddOcr(show_ad = False)
     if type(base64_img) == str:
         base64_img = bytes(base64_img, encoding = "utf-8")
     imgdata = base64.b64decode(base64_img)
-    
     code = ocr.classification(imgdata)
-    
     return code
     
 
