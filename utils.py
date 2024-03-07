@@ -49,6 +49,7 @@ def GetCode(base64_img: Union[ByteString,AnyStr]):
 def OCRCODE(base64_img: Union[ByteString,AnyStr]):
     from ddddocr import DdddOcr
     
+    # close the ads.
     ocr = DdddOcr(show_ad = False)
     if type(base64_img) == str:
         base64_img = bytes(base64_img, encoding = "utf-8")
