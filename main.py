@@ -286,6 +286,10 @@ class RUCSpider(object):
             return captcha_text,captcha_id,bytes(b64_img,encoding="utf-8")
             
         code,id,img = Retrieve_captcha()
+        while len(code) != 4:
+            self.logger.info("Captcha predict trival error. Try again.")
+            code,id,img = Retrieve_captcha()
+            
         params["captcha_id"] = id
         params["code"] = code
         
@@ -350,8 +354,9 @@ class RUCSpider(object):
             response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"])
         except Exception as e:
             self.logger.warning(str(e))
-            response = {"data":{"data":[]}}
-            return
+            self.logger.info("Reloading cookies and try once.")
+            self._GetCookie_(self.infos,self.captcha_func)
+            response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"])
         
         results = response["data"]["data"]
         
@@ -361,8 +366,6 @@ class RUCSpider(object):
                 
         else:
             saves = []
-        
-        Update = False
         
         if saves == []:
             saves = [res["aid"] for res in results]
@@ -382,11 +385,12 @@ class RUCSpider(object):
 
         if len(new_id) != 0:
             self.logger.info("Trying register new lectures {}.".format(str(new_id)))
-            self.register(new_id)
+            outcome = self.register(new_id)
             with open("log.txt","a",encoding='utf-8') as f:
                 for lec in new_lectures:
-                    f.write(lec["aname"] + ':' + lec["location"] + '\n')
+                    f.write(lec["aname"] + '(' + lec["aid"] + '):' + lec["location"] + '\n')
                     f.write(lec["begintime"] + '~' + lec["endtime"] + '\n')
+                    f.write(outcome[lec["aid"]] + '\n')
                     f.write('\n')
             
         self.logger.info("Check complete.")
@@ -401,10 +405,15 @@ class RUCSpider(object):
             results = request_response(method = 'POST',logger = self.logger, url = tgt_url, headers = headers, json = params, cookies = self.infos["cookies"])
             
             return results["msg"]
-
+        
+        result = dict()
+        
         for id in aid:
             res = sub_reg(id)
             self.logger.info("Register id {:>6d}: {}".format(id,res))
+            result[id] = res
+            
+        return result
 
     @classmethod
     def FilterLecture(self,lect:dict,schedule:list):
