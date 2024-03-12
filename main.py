@@ -388,7 +388,7 @@ class RUCSpider(object):
             outcome = self.register(new_id)
             with open("log.txt","a",encoding='utf-8') as f:
                 for lec in new_lectures:
-                    f.write(lec["aname"] + '(' + lec["aid"] + '):' + lec["location"] + '\n')
+                    f.write(lec["aname"] + '(' + str(lec["aid"]) + '):' + lec["location"] + '\n')
                     f.write(lec["begintime"] + '~' + lec["endtime"] + '\n')
                     f.write(outcome[lec["aid"]] + '\n')
                     f.write('\n')
