@@ -1,7 +1,6 @@
 import logging
 import colorlog
 
-
 log_colors_config = {
     'DEBUG': 'white',
     'INFO': 'cyan',
@@ -49,8 +48,5 @@ def init_log(name:str):
 
 if __name__ == '__main__':
     logger = init_log('test')
-    
     logger.warning('test warning')
     logger.info('signs')
-    
-    

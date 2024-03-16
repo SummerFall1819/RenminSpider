@@ -37,20 +37,11 @@ def GetCode(base64_img: Union[ByteString,AnyStr]):
     # window.mainloop()
     return CODE_1
 
-# def OCRCODE(base_64_img: str):
-#     import muggle_ocr
-#     sdk = muggle_ocr.SDK(model_type=muggle_ocr.ModelType.Captcha)
-#     if type(base_64_img) == str:
-#         base_64_img = bytes(base_64_img, encoding = "utf-8")
-#     imgdata = base64.b64decode(base_64_img)
-#     text = sdk.predict(imgdata)
-#     return text
-
 def OCRCODE(base64_img: Union[ByteString,AnyStr]):
     from ddddocr import DdddOcr
     
     # close the ads.
-    ocr = DdddOcr(show_ad = False)
+    ocr = DdddOcr()
     if type(base64_img) == str:
         base64_img = bytes(base64_img, encoding = "utf-8")
     imgdata = base64.b64decode(base64_img)

@@ -43,6 +43,8 @@ def request_response(is_json        : bool           = True,
     
     arg = locals()
     
+    response = None
+    
     try:
         if method == 'GET':
             response = requests.get(*args, **kwargs)
@@ -57,25 +59,31 @@ def request_response(is_json        : bool           = True,
             return response.json()
         else:
             return response.text
-    
+    # 遭遇网络异常错误: 网络连接不通。
     except requests.exceptions.ConnectionError as e:
         if logger != None:
-            logger.warning("The connection is down.\n")
+            logger.warning("CONNECTION: The connection is down.\n")
             logger.warning("Error Value {}".format(e))
         raise HoldException(str(e))
 
+    # 响应时间过长。
     except requests.exceptions.Timeout as e:
         if logger != None:
-            logger.warning("The connection is timeout.\n")
+            logger.warning("TIMEOUT: the connection took long.\n")
+            logger.warning("Error value: {}".format(e))
+        raise RetryException(str(e), arg)
+    
+    except requests.exceptions.HTTPError as e:
+        if logger != None:
+            logger.warning("HTTPERROR: Request HTTP error. Error Code {}".format(response.status_code))
             logger.warning("Error value: {}".format(e))
         raise RetryException(str(e),arg)
             
     except requests.exceptions.RequestException as e:
         if logger != None:
-            logger.warning("Request failed. Error Code {}".format(response.status_code))
             logger.warning("Error value: {}".format(e))
         raise RetryException(str(e),arg)
-            
+    
     except Exception as e:
         if logger != None:
             logger.warning("Unknown error. Error value: {}".format(e))
@@ -340,6 +348,7 @@ class RUCSpider(object):
         
         new_lectures = []
         new_id = []
+        response = {"data":{"data":[]}}
             
         try:
             response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"])
