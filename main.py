@@ -17,6 +17,18 @@ from spiderlog import init_log
 
 MANUAL_CAPTCHA = False
 INTERVAL = 300
+MAX_RETRY_TIMES = 3
+
+FORMAT_OUTPUT = \
+"""
+{lec_name}({lec_id}): {location}
+{start_time} ~ {end_time}
+{status}
+quick_href: https://v.ruc.edu.cn//campus#/activity/partakedetail/{lec_id}/description
+
+"""
+
+
 
 def request_response(is_json        : bool           = True,
                     method          : str            = 'GET',
@@ -47,9 +59,9 @@ def request_response(is_json        : bool           = True,
     
     try:
         if method == 'GET':
-            response = requests.get(*args, **kwargs)
+            response = requests.get(timeout = 5, *args, **kwargs)
         elif method == 'POST':
-            response = requests.post(*args, **kwargs)
+            response = requests.post(timeout = 5, *args, **kwargs)
         else:
             raise ValueError("The method should be 'GET' or 'POST'.")
         
@@ -71,18 +83,18 @@ def request_response(is_json        : bool           = True,
         if logger != None:
             logger.warning("TIMEOUT: the connection took long.\n")
             logger.warning("Error value: {}".format(e))
-        raise RetryException(str(e), arg)
+        raise RetryException(str(e))
     
     except requests.exceptions.HTTPError as e:
         if logger != None:
             logger.warning("HTTPERROR: Request HTTP error. Error Code {}".format(response.status_code))
             logger.warning("Error value: {}".format(e))
-        raise RetryException(str(e),arg)
+        raise RetryException(str(e))
             
     except requests.exceptions.RequestException as e:
         if logger != None:
             logger.warning("Error value: {}".format(e))
-        raise RetryException(str(e),arg)
+        raise RetryException(str(e))
     
     except Exception as e:
         if logger != None:
@@ -120,6 +132,10 @@ class RUCSpider(object):
         self.captcha_func = cookie_retrieve
         
         self.infos = self.CheckSettings()
+        
+        # 清空原本的 logger.
+        with open("log.log","w",encoding='utf-8') as f:
+            f.write("")
         
     
     def update(self):
@@ -208,6 +224,7 @@ class RUCSpider(object):
         url = r"https://v.ruc.edu.cn/auth/login?&proxy=true&redirect_uri=https://v.ruc.edu.cn/oauth2/authorize?client_id=accounts.tiup.cn&redirect_uri=https://v.ruc.edu.cn/sso/callback?school_code=ruc&theme=schools&response_type=code&school_code=ruc&scope=all&state=jnTBbsfBumjuSrfZ&theme=schools&school_code=ruc"
         
         headers = {'user-Agent': self.ua.random}
+        res_html = None
         
         try:
             res_html = request_response(is_json = False, method = 'GET', logger = self.logger, url = url,headers = headers)
@@ -216,11 +233,16 @@ class RUCSpider(object):
             exit(0)
         except RetryException as e:
             self.logger.debug("Token Retrive fail. Retrying.")
-            arg = e.GetParams()
-            res_html = request_response(arg,kwargs=arg["kwargs"])
-        
-        # with open('xxx.html',"w",encoding='utf-8') as f:
-        #     f.write(res_html)
+            
+            for __ in range(MAX_RETRY_TIMES):
+                try:
+                    res_html = request_response(is_json = False, method = 'GET', logger = self.logger, url = url,headers = headers)
+                    break
+                except:
+                    continue
+            
+            if res_html == None:
+                raise AbortException("Token Retrive fail. Retry times exceed the limit.")
         
         regex = re.compile(r'(?<=<input type="hidden" name="csrftoken" value=")([\S]+)(?=" id="csrftoken" \/>)')
         token = re.search(regex,res_html)[0]
@@ -264,15 +286,25 @@ class RUCSpider(object):
             
             headers = {'user-Agent': self.ua.random}
             
+            captcha_info = None
+            
             try:
                 captcha_info = request_response(logger = self.logger, url = captcha_url,headers = headers)
             except (HoldException,AbortException) as e:
                 self.logger.error("Aborion with {}".format(str(e)))
                 exit(0)
             except RetryException as e:
-                arg = e.GetParams()
-                self.logger.debug("Cookie retrieve fail. Retrying.")
-                captcha_info = request_response(arg,kwargs = arg["kwargs"])
+                self.logger.warning("Cookie retrieve fail. Retrying.")
+                for __ in range(MAX_RETRY_TIMES):
+                    try:
+                        captcha_info = request_response(logger = self.logger, url = captcha_url,headers = headers)
+                        break
+                    except:
+                        continue
+                    
+                if captcha_info == None:
+                    raise AbortException("Cookie retrieve fail. Retry times exceed the limit.")
+            
             except Exception as e:
                 self.logger.error("Aborion with {}".format(str(e)))
                 exit(0)
@@ -302,8 +334,12 @@ class RUCSpider(object):
         params["code"] = code
         
         session = requests.Session()
-        session.post(url = tgt_url, headers=headers, json = params)
-        cookie = session.cookies.get_dict()
+        cookie = None
+        try:
+            session.post(url = tgt_url, headers=headers, json = params)
+            cookie = session.cookies.get_dict()
+        except:
+            raise AbortException("Unable to keep a session.")
         
         if len(cookie) == 0:
             self.logger.critical("Unexpected error. Check username, password and captcha in 'error.txt' to ensure the login process is correct.")
@@ -314,6 +350,11 @@ class RUCSpider(object):
                 f.write("code    :{}\n".format(params["code"]))
                 
             imgdata = base64.b64decode(img)
+            
+            # remove any remaining png (if any)
+            pngs = [fig for fig in os.listdir() if fig.endswith(".png")]
+            for png in pngs:
+                os.remove(png)
             
             with open("{}.png".format(params["captcha_id"]),"wb") as f:
                 f.write(imgdata)
@@ -348,24 +389,36 @@ class RUCSpider(object):
         
         new_lectures = []
         new_id = []
-        response = {"data":{"data":[]}}
+        response = None
             
         try:
             response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"])
         except HoldException as e:
             self.logger.info("Holding pulling.")
-            response = {"data":{"data":[]}}
             return
+        
         except RetryException as e:
             self.logger.debug("Detecting error as {}. Reloading cookies.".format(e))
-            arg = e.GetParams()
             self._GetCookie_(self.infos,self.captcha_func)
-            response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"])
+            for __ in range(MAX_RETRY_TIMES):
+                try:
+                    response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"])
+                    break
+                except:
+                    continue
+            
+            if response == None:
+                raise AbortException("Can't reach lecture after reloading cookies. Retry times exceed the limit.")
+            
         except Exception as e:
             self.logger.warning(str(e))
             self.logger.info("Reloading cookies and try once.")
             self._GetCookie_(self.infos,self.captcha_func)
             response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"])
+        
+        if response == None: # skip this turn.
+            self.logger.info("receive empty response, this turn is skipped. Check logger to locate the issue.")
+            return
         
         results = response["data"]["data"]
         
@@ -397,10 +450,15 @@ class RUCSpider(object):
             outcome = self.register(new_id)
             with open("log.txt","a",encoding='utf-8') as f:
                 for lec in new_lectures:
-                    f.write(lec["aname"] + '(' + str(lec["aid"]) + '):' + lec["location"] + '\n')
-                    f.write(lec["begintime"] + '~' + lec["endtime"] + '\n')
-                    f.write(outcome[lec["aid"]] + '\n')
-                    f.write('\n')
+                    
+                    result = FORMAT_OUTPUT.format(\
+                        lec_name   = lec["aname"], 
+                        lec_id     = lec["aid"], 
+                        location   = lec["location"], 
+                        start_time = lec["begintime"], 
+                        end_time   = lec["endtime"], 
+                        status     = outcome[lec["aid"]])
+                    f.write(result)
             
         self.logger.info("Check complete.")
     
@@ -483,3 +541,4 @@ if __name__ == "__main__":
     
     
 # make it robust. If the code fails. you may just use log in again...
+
