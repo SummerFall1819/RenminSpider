@@ -242,7 +242,9 @@ class RUCSpider(object):
                     continue
             
             if res_html == None:
-                raise AbortException("Token Retrive fail. Retry times exceed the limit.")
+                # raise AbortException("Token Retrive fail. Retry times exceed the limit.")
+                self.logger.critical("Token Retrive fail. Retry times exceed the limit.")
+                sys.exit(0)
         
         regex = re.compile(r'(?<=<input type="hidden" name="csrftoken" value=")([\S]+)(?=" id="csrftoken" \/>)')
         token = re.search(regex,res_html)[0]
@@ -303,7 +305,9 @@ class RUCSpider(object):
                         continue
                     
                 if captcha_info == None:
-                    raise AbortException("Cookie retrieve fail. Retry times exceed the limit.")
+                    # raise AbortException("Cookie retrieve fail. Retry times exceed the limit.")
+                    self.logger.critical("Cookie retrieve fail. Retry times exceed the limit.")
+                    sys.exit(0)
             
             except Exception as e:
                 self.logger.error("Aborion with {}".format(str(e)))
@@ -339,7 +343,9 @@ class RUCSpider(object):
             session.post(url = tgt_url, headers=headers, json = params)
             cookie = session.cookies.get_dict()
         except:
-            raise AbortException("Unable to keep a session.")
+            # raise AbortException("Unable to keep a session.")
+            self.logger.critical("Unable to keep a session.")
+            sys.exit(0)
         
         if len(cookie) == 0:
             self.logger.critical("Unexpected error. Check username, password and captcha in 'error.txt' to ensure the login process is correct.")
@@ -364,6 +370,21 @@ class RUCSpider(object):
         return cookie,self.timestamp + self.DELTA_TIME
     
     def PullLecture(self, maxlen:int = 30,Condition:list = None, Query:str = "", filter = lambda x: True):
+        """
+        Pull the satisfied lecture.
+
+        _extended_summary_
+
+        Args:
+            maxlen (int, optional): program will extract so many lectures. Defaults to 30.
+            ? Condition (list[List[int]]]): the condition list, each condition is one list containing 3 options. Defaults to None.
+            Condition (list[int]) the condition of three options. defaults to None
+            Query (str, optional): the query text. Defaults to "".
+            filter (Callable, optional): the function to do a detailed filter. Defaults to (SELECT ALL)
+
+        Raises:
+            AbortException: _description_
+        """
         tgt_url = r"https://v.ruc.edu.cn/campus/v2/search"
         SAVE_FILES = "./res.json"
         
@@ -408,7 +429,9 @@ class RUCSpider(object):
                     continue
             
             if response == None:
-                raise AbortException("Can't reach lecture after reloading cookies. Retry times exceed the limit.")
+                # raise HoldException("Can't reach lecture after reloading cookies. Retry times exceed the limit.")
+                self.logger.warning("Can't reach lecture after reloading cookies. Retry times exceed the limit.")
+                return
             
         except Exception as e:
             self.logger.warning(str(e))
@@ -538,7 +561,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
-    
-# make it robust. If the code fails. you may just use log in again...
+
 
