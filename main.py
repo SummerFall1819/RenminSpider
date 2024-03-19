@@ -429,7 +429,8 @@ class RUCSpider(object):
             now_timestap = datetime.now().timestamp()
             if now_timestap > self.infos["expire_time"]:
                 self.logger.info("Cookies expired. Reloading cookies.")
-                self._GetCookie_(self.infos,self.captcha_func)
+                self.update()
+                #self._GetCookie_(self.infos,self.captcha_func)
             else:
                 self.logger.info("Detecting error as e {}, Retry for {} times".format(str(e), MAX_RETRY_TIMES))
             for index in range(MAX_RETRY_TIMES):
@@ -449,7 +450,8 @@ class RUCSpider(object):
         except Exception as e:
             self.logger.warning(str(e))
             self.logger.info("Reloading cookies and try once.")
-            self._GetCookie_(self.infos,self.captcha_func)
+            self.update()
+            #self._GetCookie_(self.infos,self.captcha_func)
             response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"])
         
         if response == None: # skip this turn.
