@@ -6,6 +6,7 @@ import json
 import base64
 import sys
 import os
+import re
 
 from fake_useragent import UserAgent
 import yaml
@@ -28,12 +29,14 @@ quick_href: https://v.ruc.edu.cn//campus#/activity/partakedetail/{lec_id}/descri
 
 """
 
+pattern = re.compile(r'[a-zA-Z]{4}')
 
 
-def request_response(is_json        : bool           = True,
-                    method          : str            = 'GET',
-                    logger          : logging.Logger = None,
-                    encoding        : str            = 'utf-8',
+def request_response(is_json: bool           = True,
+                    method  : str            = 'GET',
+                    logger  : logging.Logger = None,
+                    encoding: str            = 'utf-8',
+                    verbose : bool           = True,
                     *args, **kwargs): 
     """
     Pack the request and do the error handling.
@@ -73,31 +76,31 @@ def request_response(is_json        : bool           = True,
             return response.text
     # 遭遇网络异常错误: 网络连接不通。
     except requests.exceptions.ConnectionError as e:
-        if logger != None:
-            logger.warning("CONNECTION: The connection is down.\n")
+        if logger != None and verbose:
+            logger.warning("CONNECTION: The connection is down.")
             logger.warning("Error Value {}".format(e))
         raise HoldException(str(e))
 
     # 响应时间过长。
     except requests.exceptions.Timeout as e:
-        if logger != None:
-            logger.warning("TIMEOUT: the connection took long.\n")
+        if logger != None and verbose:
+            logger.warning("TIMEOUT: the connection took long.")
             logger.warning("Error value: {}".format(e))
         raise RetryException(str(e))
     
     except requests.exceptions.HTTPError as e:
-        if logger != None:
+        if logger != None and verbose:
             logger.warning("HTTPERROR: Request HTTP error. Error Code {}".format(response.status_code))
             logger.warning("Error value: {}".format(e))
         raise RetryException(str(e))
             
     except requests.exceptions.RequestException as e:
-        if logger != None:
+        if logger != None and verbose:
             logger.warning("Error value: {}".format(e))
         raise RetryException(str(e))
     
     except Exception as e:
-        if logger != None:
+        if logger != None and verbose:
             logger.warning("Unknown error. Error value: {}".format(e))
         
         raise HoldException(str(e))
@@ -234,11 +237,13 @@ class RUCSpider(object):
         except RetryException as e:
             self.logger.debug("Token Retrive fail. Retrying.")
             
-            for __ in range(MAX_RETRY_TIMES):
+            for index in range(MAX_RETRY_TIMES):
                 try:
-                    res_html = request_response(is_json = False, method = 'GET', logger = self.logger, url = url,headers = headers)
+                    res_html = request_response(is_json = False, method = 'GET', logger = self.logger, url = url,headers = headers, verbose= False)
                     break
                 except:
+                    self.logger.info("Retry No.{} Finished.".format(index + 1))
+                    time.sleep(3)
                     continue
             
             if res_html == None:
@@ -297,11 +302,13 @@ class RUCSpider(object):
                 exit(0)
             except RetryException as e:
                 self.logger.warning("Cookie retrieve fail. Retrying.")
-                for __ in range(MAX_RETRY_TIMES):
+                for index in range(MAX_RETRY_TIMES):
                     try:
-                        captcha_info = request_response(logger = self.logger, url = captcha_url,headers = headers)
+                        captcha_info = request_response(logger = self.logger, url = captcha_url,headers = headers, verbose= False)
                         break
                     except:
+                        self.logger.info("Retry No.{} Finished.".format(index + 1))
+                        time.sleep(3)
                         continue
                     
                 if captcha_info == None:
@@ -330,10 +337,9 @@ class RUCSpider(object):
             return captcha_text,captcha_id,bytes(b64_img,encoding="utf-8")
             
         code,id,img = Retrieve_captcha()
-        while len(code) != 4:
+        while not re.match(r"[a-zA-Z0-9]{4}",code):
             self.logger.info("Captcha predict trival error. Try again.")
             code,id,img = Retrieve_captcha()
-            
         params["captcha_id"] = id
         params["code"] = code
         
@@ -419,18 +425,25 @@ class RUCSpider(object):
             return
         
         except RetryException as e:
-            self.logger.debug("Detecting error as {}. Reloading cookies.".format(e))
-            self._GetCookie_(self.infos,self.captcha_func)
-            for __ in range(MAX_RETRY_TIMES):
+            # self.logger.debug("Detecting error as {}. Reloading cookies.".format(e))
+            now_timestap = datetime.now().timestamp()
+            if now_timestap > self.infos["expire_time"]:
+                self.logger.info("Cookies expired. Reloading cookies.")
+                self._GetCookie_(self.infos,self.captcha_func)
+            else:
+                self.logger.info("Detecting error as e {}, Retry for {} times".format(str(e), MAX_RETRY_TIMES))
+            for index in range(MAX_RETRY_TIMES):
                 try:
-                    response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"])
+                    response = request_response(method='POST',logger = self.logger, url = tgt_url,headers = headers,json = params,cookies = self.infos["cookies"],verbose=False)
                     break
                 except:
+                    self.logger.info("Retry No.{} Finished.".format(index + 1))
+                    time.sleep(3)
                     continue
             
             if response == None:
                 # raise HoldException("Can't reach lecture after reloading cookies. Retry times exceed the limit.")
-                self.logger.warning("Can't reach lecture after reloading cookies. Retry times exceed the limit.")
+                self.logger.warning("Can't reach lecture after reloading cookies. Retry times exceed the limit. This turn is skipped.")
                 return
             
         except Exception as e:
