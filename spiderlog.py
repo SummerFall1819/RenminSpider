@@ -1,6 +1,8 @@
 import logging
 import colorlog
 
+from plyer import notification
+
 log_colors_config = {
     'DEBUG': 'white',
     'INFO': 'cyan',
@@ -45,6 +47,10 @@ def init_log(name:str):
         logger.addHandler(filehandler)
     
     return logger
+
+
+def box_alert(title:str,msg:str,icon_path:str):
+    notification.notify(title = title, message = msg, timeout = 5,app_icon = icon_path)
 
 if __name__ == '__main__':
     logger = init_log('test')

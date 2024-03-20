@@ -14,7 +14,7 @@ import requests
 import schedule
 
 from spiderexcep import *
-from spiderlog import init_log
+from spiderlog import init_log,box_alert
 
 MANUAL_CAPTCHA = False
 INTERVAL = 300
@@ -108,8 +108,10 @@ def request_response(is_json: bool           = True,
 
 class RUCSpider(object):
     def __init__(self,
-                setting_file:str = "./setting.yml",
-                cookie_retrieve = None):
+                setting_file    : str  = "./setting.yml",
+                window_alert    : bool = False,
+                window_icon     : str  = "RUCWeb.ico",
+                cookie_retrieve = None): 
         """
         The initialization of the class.
 
@@ -126,6 +128,13 @@ class RUCSpider(object):
         """
         self.ua = UserAgent()
         self.setting_file = setting_file
+        
+        self.window_alert = window_alert
+        
+        if os.path.exists(window_icon):
+            self.icon_path = window_icon
+        else:
+            self.icon_path = None
         
         self.logger = init_log('<RUCSpider>')
         
@@ -517,7 +526,11 @@ class RUCSpider(object):
             res = sub_reg(id)
             self.logger.info("Register id {:>6d}: {}".format(id,res))
             result[id] = res
-            
+        
+        success_lec = [id for id,res in result.items() if res == "报名成功"]
+        if self.window_alert:
+            box_alert(title="Notice",msg="Lecture {} successfully registered.".format(str(success_lec)),icon_path=self.icon_path)
+        
         return result
 
     @classmethod
@@ -560,7 +573,7 @@ def main():
     
     CONDITION = ["素质拓展认证","形势与政策","形势与政策讲座"]
     
-    spider = RUCSpider()
+    spider = RUCSpider(window_alert = True)
     with open("schedule.yml","r",encoding="utf-8") as f:
         timespan = yaml.load(f,Loader=yaml.FullLoader)
         
