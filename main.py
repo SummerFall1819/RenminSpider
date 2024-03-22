@@ -528,7 +528,7 @@ class RUCSpider(object):
             result[id] = res
         
         success_lec = [id for id,res in result.items() if res == "报名成功"]
-        if self.window_alert:
+        if self.window_alert and success_lec != []:
             box_alert(title="Notice",msg="Lecture {} successfully registered.".format(str(success_lec)),icon_path=self.icon_path)
         
         return result
