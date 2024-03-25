@@ -483,20 +483,21 @@ class RUCSpider(object):
         else:
             for lec in results:
                 if lec["aid"] not in saves:
-                    self.logger.warning("New lecture found!")
+                    self.logger.warning("New lecture {} found!".format(lec["aid"]))
                     saves.append(lec["aid"])
                     new_lectures.append(lec)
         
         with open(SAVE_FILES,"w",encoding = 'utf-8') as f:
             json.dump(saves,f,ensure_ascii=False,separators=(',', ':'),indent = 4)
         
-        new_id = [lec["aid"] for lec in new_lectures if filter(lec)]
+        filtered_lec = [lec for lec in new_lectures if filter(lec)]
+        new_id = [lec["aid"] for lec in filtered_lec]
 
         if len(new_id) != 0:
             self.logger.info("Trying register new lectures {}.".format(str(new_id)))
             outcome = self.register(new_id)
             with open("log.txt","a",encoding='utf-8') as f:
-                for lec in new_lectures:
+                for lec in filtered_lec:
                     
                     result = FORMAT_OUTPUT.format(\
                         lec_name   = lec["aname"], 
@@ -577,9 +578,7 @@ def main():
     with open("schedule.yml","r",encoding="utf-8") as f:
         timespan = yaml.load(f,Loader=yaml.FullLoader)
         
-    spider.PullLecture(maxlen = 30, Condition = CONDITION ,filter = packed(timespan))
-
-    filt = packed(timespan)
+    spider.PullLecture(maxlen = 30, Condition = CONDITION)
 
     schedule.every(INTERVAL).seconds.do(spider.PullLecture,maxlen = 30, Condition = CONDITION)
     schedule.every(30).minutes.do(spider.update)
