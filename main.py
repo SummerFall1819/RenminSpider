@@ -26,6 +26,7 @@ FORMAT_OUTPUT = \
 {start_time} ~ {end_time}
 {status}
 quick_href: https://v.ruc.edu.cn//campus#/activity/partakedetail/{lec_id}/description
+register_time: {time}
 
 """
 
@@ -505,7 +506,8 @@ class RUCSpider(object):
                         location   = lec["location"], 
                         start_time = lec["begintime"], 
                         end_time   = lec["endtime"], 
-                        status     = outcome[lec["aid"]])
+                        status     = outcome[lec["aid"]],
+                        time = datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                     f.write(result)
             
         self.logger.info("Check complete.")
@@ -578,9 +580,12 @@ def main():
     with open("schedule.yml","r",encoding="utf-8") as f:
         timespan = yaml.load(f,Loader=yaml.FullLoader)
         
-    spider.PullLecture(maxlen = 30, Condition = CONDITION)
+    # filt = packed(timespan)
+    filt = lambda x: True
+        
+    spider.PullLecture(maxlen = 30, Condition = CONDITION ,filter = filt)
 
-    schedule.every(INTERVAL).seconds.do(spider.PullLecture,maxlen = 30, Condition = CONDITION)
+    schedule.every(INTERVAL).seconds.do(spider.PullLecture,maxlen = 30, Condition = CONDITION, filter = filt)
     schedule.every(30).minutes.do(spider.update)
     
     while True:
