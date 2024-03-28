@@ -92,11 +92,7 @@ def init_log(name:str):
     
     return logger
 
-
-def box_alert_mul(title:str,msg:str,icon_path:str):
-    notification.notify(title = title, message = msg, timeout = 5,app_icon = icon_path)
-
-def box_alert(lectures:list):
+def box_alert(lectures:list,*args, **kwargs):
     notification.notify(title = "Notice", msg = "Lecture {} successfully registered.".format(str(lectures)),icon_path = ICON_PATH)
 
 NOTIFIER["toast"] = box_alert
