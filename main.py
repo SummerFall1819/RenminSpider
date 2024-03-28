@@ -7,6 +7,7 @@ import base64
 import sys
 import os
 import re
+from collections import defaultdict
 
 from fake_useragent import UserAgent
 import yaml
@@ -478,15 +479,24 @@ class RUCSpider(object):
         
         results = response["data"]["data"]
         
+        ref_dict = defaultdict(lambda: [])
+        
+        
         if os.path.exists(SAVE_FILES):
             with open(SAVE_FILES,"r",encoding = 'utf-8') as f:
                 saves = json.load(f)
+                ref_dict.update(saves)
                 
-        else:
-            saves = []
+        # else:
+        #     saves = []
+            
+        condition_key = ":".join(list(map(lambda x:str(x),Condition)))
+        
+        saves = ref_dict[condition_key]
         
         if saves == []:
             saves = [res["aid"] for res in results]
+            ref_dict[condition_key] = saves
             self.logger.debug("Empty result storage filled.")
 
         else:
@@ -495,9 +505,10 @@ class RUCSpider(object):
                     self.logger.warning("New lecture {} found!".format(lec["aid"]))
                     saves.append(lec["aid"])
                     new_lectures.append(lec)
+                    ref_dict[condition_key] = saves
         
         with open(SAVE_FILES,"w",encoding = 'utf-8') as f:
-            json.dump(saves,f,ensure_ascii=False,separators=(',', ':'),indent = 4)
+            json.dump(ref_dict,f,ensure_ascii=False,separators=(',', ':'),indent = 4)
         
         filtered_lec = [lec for lec in new_lectures if filter(lec)]
         new_id = [lec["aid"] for lec in filtered_lec]
@@ -594,19 +605,24 @@ def main():
     # filt = packed(timespan)
     filt = lambda x: True
     
+    
+    
+        
+        
+    spider.PullLecture(maxlen = 30, Condition = CONDITION ,filter = filt)
+
+    schedule.every(INTERVAL).seconds.do(spider.PullLecture,maxlen = 30, Condition = CONDITION, filter = filt)
+    schedule.every(30).minutes.do(spider.update)
+    
     with Progress(
         SpinnerColumn(),
         *Progress.get_default_columns(),
         TimeElapsedColumn(),
         transient=False,
+        expand = True
     ) as progress:
-    
-        task = progress.add_task("[purple]Listening...", total=None)
         
-        spider.PullLecture(maxlen = 30, Condition = CONDITION ,filter = filt)
-
-        schedule.every(INTERVAL).seconds.do(spider.PullLecture,maxlen = 30, Condition = CONDITION, filter = filt)
-        schedule.every(30).minutes.do(spider.update)
+        task = progress.add_task("[purple]Listening...", total=None)
         
         while True:
             schedule.run_pending()
