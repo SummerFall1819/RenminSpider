@@ -55,6 +55,9 @@ RUCSpider
     **此程序已完全开源，并保证本地部署不会外传任何敏感信息，但用户在使用程序时仍应当注意防止泄露密码。** 
 - `username`: **必填**， 用户的学号。形式为 `username: 20xxxxxxxx`
 - `manual`: 是否使用手动输入验证码，如果在安装时决定采用方法 1, 请修改为 `True`.
+- `notifier`: 提醒渠道。从`box_alert`（弹窗）、`wx_alert`（微信推送）或者`none`（不提醒）中选择
+- `wxpusher_appToken`: 在[管理后台WxPusher](https://wxpusher.zjiecode.com/admin)创建一个私有App，并填入对应Token
+- `wxpusher_uid`: [关注公众号](https://wxpusher.zjiecode.com/demo)并获取微信帐号对应的UID
 
 在完成修改之后，(激活虚拟环境)，运行 `main.py` 即可。
 
