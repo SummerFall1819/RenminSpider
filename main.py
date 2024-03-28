@@ -12,9 +12,10 @@ from fake_useragent import UserAgent
 import yaml
 import requests
 import schedule
+from rich.progress import Progress, SpinnerColumn, TimeElapsedColumn
 
 from spiderexcep import *
-from spiderlog import init_log,box_alert
+from spiderlog import init_log,NOTIFIER
 
 MANUAL_CAPTCHA = False
 INTERVAL = 300
@@ -220,10 +221,17 @@ class RUCSpider(object):
             INTERVAL = info["interval_seconds"]
             Update = True
             
+        try:
+            self.notify = NOTIFIER[info["notify"]](**info,logger = self.logger)
+        except Exception as e:
+            print(e)
+            self.notify = NOTIFIER["none"]
+            
         if Update:
             self.logger.info("Updating information.")
             with open(self.setting_file, "w", encoding = 'utf-8') as f:
                 yaml.dump(info, f)
+                
             
         return info
     
@@ -531,8 +539,11 @@ class RUCSpider(object):
             result[id] = res
         
         success_lec = [id for id,res in result.items() if res == "报名成功"]
-        if self.window_alert and success_lec != []:
-            box_alert(title="Notice",msg="Lecture {} successfully registered.".format(str(success_lec)),icon_path=self.icon_path)
+        # if self.window_alert and success_lec != []:
+        #     box_alert(title="Notice",msg="Lecture {} successfully registered.".format(str(success_lec)),icon_path=self.icon_path)
+        #     # @TODO Rewrite!!!!
+        if len(success_lec) > 0:
+            self.notify(success_lec)
         
         return result
 
@@ -582,14 +593,23 @@ def main():
         
     # filt = packed(timespan)
     filt = lambda x: True
-        
-    spider.PullLecture(maxlen = 30, Condition = CONDITION ,filter = filt)
-
-    schedule.every(INTERVAL).seconds.do(spider.PullLecture,maxlen = 30, Condition = CONDITION, filter = filt)
-    schedule.every(30).minutes.do(spider.update)
     
-    while True:
-        schedule.run_pending()
+    with Progress(
+        SpinnerColumn(),
+        *Progress.get_default_columns(),
+        TimeElapsedColumn(),
+        transient=False,
+    ) as progress:
+    
+        task = progress.add_task("[purple]Listening...", total=None)
+        
+        spider.PullLecture(maxlen = 30, Condition = CONDITION ,filter = filt)
+
+        schedule.every(INTERVAL).seconds.do(spider.PullLecture,maxlen = 30, Condition = CONDITION, filter = filt)
+        schedule.every(30).minutes.do(spider.update)
+        
+        while True:
+            schedule.run_pending()
 
 if __name__ == "__main__":
     main()
