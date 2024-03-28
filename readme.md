@@ -133,7 +133,3 @@ def captcha_func(base_64_img:str|bytes):
 
 ## 其他
 本程序尚未完全完成，但目前可以实现基本功能。在后期会逐步改进。
-
-$$
-\left. \int_a^b f(x) \mathrm{d}x = F(x)\right|_a^b 
-$$
