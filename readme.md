@@ -125,11 +125,124 @@ def captcha_func(base_64_img:str|bytes):
 #### 讲座类型筛选
 本程序默认是处于筛选形势与政策讲座而设计的，在 `alias.json` 下保存了少量的条件筛选内容。如果您希望进行其他讲座的监看，请修改 `main.py` 下 `CONDITION`, 其元素数目为三个，分别对应活动大类、活动小类、小类子类的筛选。
 (活动状态和组织单位的实现与监看的初衷冲突，故未实现)，如果希望查找活动名称，那么在 `PullLecture` 下加入 `Query` 为关键词即可。
-**注意**：有些小类子类名称与活动小类冲突，这种情况请将小类子类更改为 “不限”，即可实现内容。
+**注意**：有些小类子类名称与活动小类重复，这种情况请将小类子类更改为 “不限”，即可实现内容。
+
+#### 提示内容处理
+如果，用户希望实现类似于 `toast` 和 `wx` 对应的提示方式。请在 `spiderlog.py` 中完成一个自己的实现。
+```python
+def NotificationFunc(lectures: list):
+    """
+    This function would notify the contetn of the lectures in the way you desire.
+
+    Hint: You may want to use curry to add more parameters.
+    """
+    # code.
+```
+
+并将其注册在 `NOTIFIER` 中。从而可以在 `setting.yml` 中使用自己注册的方法进行提醒。
+
 
 
 ### 程序实现细节
-@TODO 待完成吧。
+在 `PullLecture` 中获得的会议信息 `json` 存储形式如下：
+```json
+{
+    "aid":<lecture ID>,
+    "aname":<lecture name>,
+    "abstract":<lecture abstract>,
+    "typelevel2":<small class>,
+    "typelevel3":<subclass>,
+    "begintime":<begin time>,
+    "endtime":<end time>,
+    "location":<lecure location>,
+    "sponsordeptids": <>,
+    "contacts":<联系人>,
+    "publishrange":<>,
+    "publishrangeid":<>,
+    "ispublic":<>,
+    "needregist":<>,
+    "allowednum":<allow register number>,
+    "waitlistnum":<>,
+    "registbegintime":<>,
+    "registendtime":<>,
+    "filterconf":<>,
+    "registnotice":<>,
+    "partakemode":<>,
+    "uploadendtime":<>,
+    "uploadrules":<>,
+    "allowcomment":<>,
+    "logo":<>,
+    "poster":<url of the post>,
+    "description":<>,
+    "activity_show":<>,
+    "prizesetting":<>,
+    "attentions":<>,
+    "applyscore":<>,
+    "organizescore":<>,
+    "partakescore":<the score of this lecture>,
+    "prizescore":<>,
+    "verifieruid":<>,
+    "status":<>,
+    "verifystatus":<>,
+    "version":<>,
+    "schoolid":<>,
+    "ctime":<>,
+    "mtime":<>,
+    "ascore":<>,
+    "progress":<>,
+    "scorestatus":<>,
+    "vtime":<>,
+    "tags":<>,
+    "allowsignin":<>,
+    "partakescorestatus":<>,
+    "themeid":<>,
+    "codechangetime":<>,
+    "signaction":<>,
+    "departmentid":<>,
+    "typelevel1":<big class>,
+    "yxbmxs":<>,
+    "yxbmdwmax":<>,
+    "mzdysmin":<>,
+    "mzdysmax":<>,
+    "teacher":<>,
+    "field":"[
+        {\"id\":<>,
+        \"uid\":<>,
+        \"type1\":<>,
+        \"type2\":<>,
+        \"type3\":<>,
+        \"field\":<>,
+        \"is_necessary\":<>,
+        \"created_at\":<>,
+        \"updated_at\":<>,
+        \"$$hashKey\":<>,
+        \"value\":<>,
+        {\"id\":<>,
+        \"uid\":<>,
+        \"type1\":<>,
+        \"type2\":<>,
+        \"type3\":<>,
+        \"field\":<>,
+        \"is_necessary\":<>,
+        \"created_at\":<>,
+        \"updated_at\":<>,
+        \"$$hashKey\":<>,
+        \"value\":<>}]",
+    "custom_poster":<>,
+    "partakemodename":<>,
+    "statusname":<>,
+    "verifystatusname":<>,
+    "progressname":<报名中/未开始/已结束>,
+    "scorestatusname":<>,
+    "sfyxtdbm":<>,
+    "username":<>,
+    "registname":<>
+},
+
+
+```
+
+
 
 ## 其他
 本程序尚未完全完成，但目前可以实现基本功能。在后期会逐步改进。
