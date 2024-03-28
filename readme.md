@@ -55,14 +55,33 @@ RUCSpider
     **此程序已完全开源，并保证本地部署不会外传任何敏感信息，但用户在使用程序时仍应当注意防止泄露密码。** 
 - `username`: **必填**， 用户的学号。形式为 `username: 20xxxxxxxx`
 - `manual`: 是否使用手动输入验证码，如果在安装时决定采用方法 1, 请修改为 `True`.
+- `notify` 可选为 `none/toast/wx`。其中：
+
+    - `none` 不进行除了日志记录之外的其他提醒行为。
+    - `toast` 会在报名成功后弹出窗口进行提示。
+    - `wx` 会在报名成功后进行微信推送。
+
+如果采用 `wx` 方式，需要一并填写 `apptoken` 和 `uid` 信息，参考请见 **其他细节-wxpush使用** 部分。
 
 在完成修改之后，(激活虚拟环境)，运行 `main.py` 即可。
 
 使用者应当注意，对于提示“报名成功”的活动，并不一定具有参与资格。活动可能取消或延期，请及时登陆微人大查看参会信息。
 
-**短期行为**: 新增了弹窗提醒功能，目前版本请在 `RUCSpider()` 初始化时指定 `window_alert = True` 启用该功能，理论上弹窗适配各平台，但未经测试。也可以指定 `window_icon = <path>` 来修改自己的弹窗图标。当前版本默认启动，之后重构时会放入 `setting.yml` 中。
 
 ## 其他细节
+
+### wxpush 使用
+
+[wxPusher(微信推送活动)](https://github.com/wxpusher/wxpusher-sdk-java/) 由 @zjiecode 提供。 在此略过诸多细节，仅说明如何操作使程序可运行。
+
+- 首先，请 [依指令注册并创建一个应用](https://wxpusher.zjiecode.com/admin/)。在此过程中，用户将获得一个唯一的 `app_token`. 请将此 `app_token` 作为 `apptoken` 填入 `setting.yml` 文件。
+- 创建应用之后，进入分享页面，通过二维码或链接关注此应用。
+- 获取自己的 `uid`.
+    - 关注公众号：wxpusher，然后点击「我的」-「我的UID」查询到UID；
+
+获取自己的 `uid` 并填入 `setting.yml` 文件。
+
+
 ### 基于本程序的其他改进
 
 #### 筛选器
@@ -114,3 +133,7 @@ def captcha_func(base_64_img:str|bytes):
 
 ## 其他
 本程序尚未完全完成，但目前可以实现基本功能。在后期会逐步改进。
+
+$$
+\left. \int_a^b f(x) \mathrm{d}x = F(x)\right|_a^b 
+$$
