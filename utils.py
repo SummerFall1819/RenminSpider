@@ -1,4 +1,3 @@
-import tkinter as tk
 import base64
 
 from typing import ByteString, AnyStr, Union
@@ -6,6 +5,7 @@ from typing import ByteString, AnyStr, Union
 CODE_1 = ""
 
 def GetCode(base64_img: Union[ByteString,AnyStr]):
+    import tkinter as tk
     window = tk.Tk()
     
     global CODE_1

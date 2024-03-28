@@ -1,7 +1,10 @@
 cookies:
-expire_time: 
-interval_seconds: 
+expire_time:
+interval_seconds: 10
 manual: false
-password: 
-token: 
-username: 
+notifier: wx_alert
+password:
+token:
+username:
+wxpusher_appToken:
+wxpusher_uid:
