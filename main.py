@@ -225,7 +225,7 @@ class RUCSpider(object):
         try:
             self.notify = NOTIFIER[info["notify"]](**info,logger = self.logger)
         except Exception as e:
-            print(e)
+            self.logger.debug(str(e) + ".Changing to none")
             self.notify = NOTIFIER["none"]
             
         if Update:

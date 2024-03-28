@@ -92,10 +92,15 @@ def init_log(name:str):
     
     return logger
 
-def box_alert(lectures:list,*args, **kwargs):
+def box_alert(lectures:list, *args, **kwargs):
     notification.notify(title = "Notice", msg = "Lecture {} successfully registered.".format(str(lectures)),icon_path = ICON_PATH)
+    
+def box_alert_wrapped(*args, **kwargs):
+    def alert(lectures:list):
+        return box_alert(lectures = lectures)
+    return alert
 
-NOTIFIER["toast"] = box_alert
+NOTIFIER["toast"] = box_alert_wrapped
 
 def wx_notify(lectures:list, app_token:str,uid:list,logger):
     html = HTML_CONTENT_HEADER
