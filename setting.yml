@@ -1,7 +1,15 @@
+apptoken: AT_xxxx
 cookies:
+  access_token: 
+  is_simple: '1'
+  session: 
+  tiup_uid: 
 expire_time: 
 interval_seconds: 
 manual: false
+notify: toast
 password: 
-token: 
+token: xxxxxx
+uid:
+- UID_xxxx
 username: 
