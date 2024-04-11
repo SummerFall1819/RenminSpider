@@ -24,21 +24,23 @@ pip install -r requirements.txt
         image = image.resize((int(image.size[0] * (64 / image.size[1])), 64), Image.ANTIALIAS).convert('L')
         ```
     - 程序会根据会话返回判断是否是验证码有误导致的登陆失败，早期版本中会以 `error.txt` 记录错误信息，现在已经删除。
-    
+
 3. 自行配置 OCR 环境，并在 `utils.py` 中重写函数。
     您可以重写 `OCRCODE` 函数，该函数接受以 `base64` 编码的 `png` 图片，最终返回该验证码对应的文本。
 
 以上步骤完成后，您的项目文件树应当如下所示。
 ```apache
 RUCSpider
-│  alias.json
-│  main.py
-│  readme.md
-│  requirements.txt
-│  schedule.yml
-│  setting.yml
-│  spiderexcep.py
-│  utils.py
+    alias.json          # record the alias of the classification.
+    main.py             
+    readme.md           
+    requirements.txt
+    RUCWeb.ico          # the icon of the toast reminder.
+    schedule.yml        # (optional) The schedule of the week.
+    setting.yml         # relative settings about this program.
+    spiderexcep.py
+    spiderlog.py
+    utils.py            
 ```
 
 ## 使用
