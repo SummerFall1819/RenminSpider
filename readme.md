@@ -23,12 +23,8 @@ pip install -r requirements.txt
         ```bash
         image = image.resize((int(image.size[0] * (64 / image.size[1])), 64), Image.ANTIALIAS).convert('L')
         ```
-    - **注意**: 由于 `ddddocr` 不能一定正确识别验证码，因此可能会导致产生其他错误，该错误是由于识别失败导致无法获取 token 信息，程序将产生 `error.txt` 文件和一个 `png` 形式的验证码文件以供校对。一旦发生此类错误，程序将立刻停止。如果由于错误的学号和密码进行多次尝试可能会冻结账号，**请确保学号和密码正确**。
-        ```bash
-        Unexpected error. Check username, password and captcha in 'error.txt' to ensure the login process is correct.
-        ```
-
-
+    - 程序会根据会话返回判断是否是验证码有误导致的登陆失败，早期版本中会以 `error.txt` 记录错误信息，现在已经删除。
+    
 3. 自行配置 OCR 环境，并在 `utils.py` 中重写函数。
     您可以重写 `OCRCODE` 函数，该函数接受以 `base64` 编码的 `png` 图片，最终返回该验证码对应的文本。
 
