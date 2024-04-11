@@ -51,9 +51,10 @@ RUCSpider
 - `cookies` 程序会使用 `cookie` 直接登录微人大。初次使用无需填写任何信息，程序会自动抓取。
 - `expire_time`: 记录 `cookie` 的有效期限，并确保每次重启动时更新。
 - `interval_seconds`: 记录监视微人大学务的间隔时间，按秒记录。
-- `password`: **必填**， 用户的登陆密码。形式为 `password: xxxxxxxxx`
-    **此程序已完全开源，并保证本地部署不会外传任何敏感信息，但用户在使用程序时仍应当注意防止泄露密码。** 
-- `username`: **必填**， 用户的学号。形式为 `username: 20xxxxxxxx`
+- `password`: 用户的登陆密码。形式为 `password: xxxxxxxxx`
+    如果不希望将其以明文存储，检测为空时，程序将通过控制台获取密码。
+- `username`:  用户的学号。形式为 `username: 20xxxxxxxx`
+    如果不希望将其以明文存储，检测为空时，程序将通过控制台获取学号。
 - `manual`: 是否使用手动输入验证码，如果在安装时决定采用方法 1, 请修改为 `True`.
 - `notify` 可选为 `none/toast/wx`。其中：
 
@@ -244,7 +245,8 @@ def NotificationFunc(lectures: list):
 
 ```
 
-
-
 ## 其他
 本程序尚未完全完成，但目前可以实现基本功能。在后期会逐步改进。
+
+TODO:
+- 增加时间选项，在长期之后打开会进行相应的处理。
