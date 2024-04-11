@@ -168,6 +168,7 @@ class RUCSpider(object):
         token                : pull html to get one.
         cookies & expire_time: within login to get.
         interval_seconds     : default to 300 (5 minutes)
+        
         Args:
             None
         
@@ -181,6 +182,8 @@ class RUCSpider(object):
         
         with open(self.setting_file, "r", encoding = 'utf-8') as f:
             info = yaml.load(f, Loader=yaml.FullLoader)
+
+        self.manuals = info["manual"]
         
         if info['username'] == None:
             self.logger.critical('username is empty, please fill in your id in your setting file!')
@@ -211,8 +214,8 @@ class RUCSpider(object):
                 info["cookies"], info["expire_time"] = self._GetCookie_(info,func = self.captcha_func)
                 Update = True
                 break
-            
-        self.manuals = info["manual"]
+        
+        
             
         if info["interval_seconds"] == None:
             self.logger.info('Interval Empty, setting to default value(300)')
@@ -282,6 +285,7 @@ class RUCSpider(object):
         
         Args:
             info: Dict[str:str] containing needed login information.
+            func: The passed in function.
 
         Returns:
             Dict: the cookie dict.
@@ -355,42 +359,60 @@ class RUCSpider(object):
             
             return captcha_text,captcha_id,bytes(b64_img,encoding="utf-8")
             
-        code,id,img = Retrieve_captcha()
-        while not re.match(r"[a-zA-Z0-9]{4}",code):
-            self.logger.info("Captcha predict trival error. Try again.")
-            code,id,img = Retrieve_captcha()
-        params["captcha_id"] = id
-        params["code"] = code
-        
         session = requests.Session()
-        cookie = None
-        try:
-            session.post(url = tgt_url, headers=headers, json = params)
-            cookie = session.cookies.get_dict()
-        except:
-            # raise AbortException("Unable to keep a session.")
-            self.logger.critical("Unable to keep a session.")
-            sys.exit(0)
+        cookie = ""
         
-        if len(cookie) == 0:
-            self.logger.critical("Unexpected error. Check username, password and captcha in 'error.txt' to ensure the login process is correct.")
+        while len(cookie) == 0:
             
-            with open('error.txt','w',encoding='utf-8') as f:
-                f.write("username:{}\n".format(params["username"][4:]))
-                f.write("password:{}\n".format(params["password"]))
-                f.write("code    :{}\n".format(params["code"]))
+            # Get one usable captcha.
+            code,id,img = Retrieve_captcha()
+            while not re.match(r"[a-zA-Z0-9]{4}",code):
+                self.logger.info("Captcha predict trival error. Try again.")
+                code,id,img = Retrieve_captcha()
+            params["captcha_id"] = id
+            params["code"] = code
+            
+            try:
+                response = session.post(url = tgt_url, headers=headers, json = params)
+            except:
+                # raise AbortException("Unable to keep a session.")
+                self.logger.critical("Unable to keep a session.")
+                sys.exit(0)
+            response = response.text
+            if response[0] == '{':
+                response_json = eval(response)
+                self.logger.warn("Authentication fail due to {}".format(response_json["error_description"]))
                 
-            imgdata = base64.b64decode(img)
+                if response_json["error_description"] != "captcha error":
+                    self.logger.error("Unable to keep the session. Check information above.")
+                    sys.exit(0)
+                else:
+                    continue
             
-            # remove any remaining png (if any)
-            pngs = [fig for fig in os.listdir() if fig.endswith(".png")]
-            for png in pngs:
-                os.remove(png)
-            
-            with open("{}.png".format(params["captcha_id"]),"wb") as f:
-                f.write(imgdata)
+            else:
+                # login successfully.
+                cookie = session.cookies.get_dict()
                 
-            sys.exit(0)
+        
+        # if len(cookie) == 0:
+        #     self.logger.critical("Unexpected error. Check username, password and captcha in 'error.txt' to ensure the login process is correct.")
+            
+        #     with open('error.txt','w',encoding='utf-8') as f:
+        #         f.write("username:{}\n".format(params["username"][4:]))
+        #         f.write("password:{}\n".format(params["password"]))
+        #         f.write("code    :{}\n".format(params["code"]))
+                
+        #     imgdata = base64.b64decode(img)
+            
+        #     # remove any remaining png (if any)
+        #     pngs = [fig for fig in os.listdir() if fig.endswith(".png")]
+        #     for png in pngs:
+        #         os.remove(png)
+            
+        #     with open("{}.png".format(params["captcha_id"]),"wb") as f:
+        #         f.write(imgdata)
+                
+        #     sys.exit(0)
 
         return cookie,self.timestamp + self.DELTA_TIME
     
@@ -550,9 +572,6 @@ class RUCSpider(object):
             result[id] = res
         
         success_lec = [id for id,res in result.items() if res == "报名成功"]
-        # if self.window_alert and success_lec != []:
-        #     box_alert(title="Notice",msg="Lecture {} successfully registered.".format(str(success_lec)),icon_path=self.icon_path)
-        #     # @TODO Rewrite!!!!
         if len(success_lec) > 0:
             self.notify(success_lec)
         
@@ -605,10 +624,6 @@ def main():
     # filt = packed(timespan)
     filt = lambda x: True
     
-    
-    
-        
-        
     spider.PullLecture(maxlen = 30, Condition = CONDITION ,filter = filt)
 
     schedule.every(INTERVAL).seconds.do(spider.PullLecture,maxlen = 30, Condition = CONDITION, filter = filt)
