@@ -8,6 +8,7 @@ import sys
 import os
 import re
 from collections import defaultdict
+from getpass import getpass
 
 from fake_useragent import UserAgent
 import yaml
@@ -179,6 +180,7 @@ class RUCSpider(object):
             ValueError: If the user didn't fill his username or password.
         """
         Update = False
+        RememberMe = True
         
         with open(self.setting_file, "r", encoding = 'utf-8') as f:
             info = yaml.load(f, Loader=yaml.FullLoader)
@@ -186,12 +188,18 @@ class RUCSpider(object):
         self.manuals = info["manual"]
         
         if info['username'] == None:
-            self.logger.critical('username is empty, please fill in your id in your setting file!')
-            sys.exit(0)
+            # self.logger.critical('username is empty, please fill in your id in your setting file!')
+            # sys.exit(0)
+            RememberMe = False
+            self.logger.info("Username empty, please enter your student ID.")
+            info['username'] = input("Student ID:")
             
         if info["password"] == None:
-            self.logger.critical('password is empty, please fill in your password in your setting file!')
-            sys.exit(0)
+            RememberMe = False
+            self.logger.info("password empty, please enter your password.")
+            info['password'] = getpass()
+            # self.logger.critical('password is empty, please fill in your password in your setting file!')
+            # sys.exit(0)
 
         if info["token"] == None:
             self.logger.info('Token empty, pulling html to get one token.')
@@ -233,10 +241,16 @@ class RUCSpider(object):
             
         if Update:
             self.logger.info("Updating information.")
+            if RememberMe == False:
+                ID,password = info["username"],info["password"]
+                info["username"] = None
+                info["password"] = None
+            
             with open(self.setting_file, "w", encoding = 'utf-8') as f:
                 yaml.dump(info, f)
                 
-            
+            if RememberMe == False:
+                info["username"],info["password"] = ID,password
         return info
     
     def _GetToken_ (self):
